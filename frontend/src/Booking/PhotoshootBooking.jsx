@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FaSpinner } from "react-icons/fa";
+import {jwtDecode} from 'jwt-decode';
+
 
 const PhotoshootBooking = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [slot, setSlot] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const { id } = useParams();
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const [booking, setBooking] = useState({
@@ -27,7 +29,8 @@ const PhotoshootBooking = () => {
     makeupArtist: false,
     outfitChanges: "0",
     imageDeliveryFormat: "Digital",
-    paymentMethod: "Credit Card"
+    paymentMethod: "Credit Card",
+    slotId:""
   });
 
   const packageDetails = {
@@ -53,32 +56,40 @@ const PhotoshootBooking = () => {
   };
 
   useEffect(() => {
-  const fetchSlot = async () => {
-    try {
-      const response = await axios.get(`http://localhost:4000/BookingOperations/slots/${id}`);
-      const slotData = response.data;
-      
-      // Ensure the date is properly formatted
-      const slotDate = new Date(slotData.slotDate);
-      if (isNaN(slotDate.getTime())) {
-        throw new Error('Invalid date received from server');
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          throw new Error('Please login to book a session');
+        }
+
+        const response = await axios.get('http://localhost:4000/UserOperations/getUser', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.data?.success) {
+          const userData = response.data.data;
+          setUser(userData);
+          setBooking(prev => ({
+            ...prev,
+            name: userData.name,
+            email: userData.email,
+            phone: userData.mobile || "",
+            address: userData.address || ""
+          }));
+        }
+      } catch (err) {
+        setError(err.message || "Failed to load user details");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setSlot(slotData);
-      setBooking(prev => ({
-        ...prev,
-        date: slotDate.toISOString().split('T')[0], // Store as YYYY-MM-DD
-        time: `${slotData.start} to ${slotData.end}`
-      }));
-      setLoading(false);
-    } catch (err) {
-      setError(err.message || "Failed to load slot details");
-      setLoading(false);
-    }
-  };
+    fetchUserProfile();
+  }, []);
 
-  fetchSlot();
-}, [id]);
 
   useEffect(() => {
     if (booking.packageType) {
@@ -88,6 +99,44 @@ const PhotoshootBooking = () => {
       }));
     }
   }, [booking.packageType]);
+
+  useEffect(() => {
+  if (booking.date && booking.time) {
+    // Generate a simple slot ID by combining date and time
+    const slotId = `${booking.date}-${booking.time.replace(':', '')}`;
+    setBooking(prev => ({ ...prev, slotId }));
+  }
+}, [booking.date, booking.time]);
+
+// Update your refreshAuthToken function
+const refreshAuthToken = async () => {
+  try {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      // No refresh token available, force logout
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login', { state: { from: '/PhotoshootBooking' } });
+      throw new Error('Session expired. Please login again.');
+    }
+    
+    const response = await axios.post('http://localhost:4000/auth/refresh', {
+      refreshToken
+    });
+    
+    localStorage.setItem('authToken', response.data.accessToken);
+    // Store the new refresh token if your backend returns one
+    if (response.data.refreshToken) {
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+    }
+    return response.data.accessToken;
+  } catch (err) {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    navigate('/login', { state: { from: '/PhotoshootBooking' } });
+    throw err;
+  }
+};
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -136,98 +185,119 @@ const PhotoshootBooking = () => {
       isValid = false;
     }
 
+     if (!booking.slotId) {
+      errors.slotId = "Please select a date and time";
+      isValid = false;
+    }
+
     setValidationErrors(errors);
     return isValid;
   };
 
-//   const handleSubmit = async (e) => {
-//   e.preventDefault();
-//   if (!validateForm()) return;
-
-//   setSubmitLoading(true);
-//   try {
-//     // Format the data to match backend expectations
-//     const bookingData = {
-//       name: booking.name,
-//       email: booking.email,
-//       phone: booking.phone,
-//       sessionType: booking.sessionType,
-//       packageType: booking.packageType,
-//       date: new Date(booking.date).toISOString(), // Convert to ISO string
-//       time: booking.time,
-//       specialRequests: booking.specialRequests,
-//       address: booking.address,
-//       status: "Pending",
-//       price: booking.price,
-//       cameras: booking.cameras,
-//       additionalEquipment: booking.additionalEquipment,
-//       makeupArtist: booking.makeupArtist,
-//       outfitChanges: booking.outfitChanges,
-//       imageDeliveryFormat: booking.imageDeliveryFormat,
-//       paymentMethod: booking.paymentMethod,
-//       slotId: id,
-//       photographer: slot.photographer
-//     };
-
-//     console.log("Submitting booking:", bookingData); // For debugging
-
-//     const response = await axios.post(
-//       "http://localhost:4000/BookingOperations/bookings",
-//       bookingData,
-//       {
-//         headers: {
-//           'Content-Type': 'application/json'
-//         }
-//       }
-//     );
-
-//     navigate("/booking-confirmation", { state: { booking: response.data } });
-//   } catch (err) {
-//     console.error("Booking error:", err.response?.data || err.message);
-//     setError(
-//       err.response?.data?.message || 
-//       err.response?.data?.error || 
-//       "Booking failed. Please try again."
-//     );
-//   } finally {
-//     setSubmitLoading(false);
-//   }
-// };
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
 
   setSubmitLoading(true);
   try {
-    // Format the date as YYYY-MM-DD
-    const formattedDate = new Date(booking.date).toISOString().split('T')[0];
+    let token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('Please login to book a session');
+    }
+
+    // Check if token is expired
+    let decoded;
+    try {
+      decoded = jwtDecode(token);
+    } catch (err) {
+      // Invalid token format
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login', { state: { from: '/PhotoshootBooking' } });
+      return;
+    }
+
+    if (decoded.exp * 1000 < Date.now()) {
+      token = await refreshAuthToken();
+    }
 
     const bookingData = {
       ...booking,
-      slotId: id,
-      photographer: slot.photographer,
-      date: formattedDate,
-      price: Number(booking.price)
+      price: isNaN(Number(booking.price)) ? 0 : Number(booking.price),
+      date: booking.date,
+      userId: user?._id || null,
+      photographer: "Default Photographer"
     };
+
+    // Clean up empty fields
+    if (!bookingData.specialRequests) delete bookingData.specialRequests;
+    if (!bookingData.address) delete bookingData.address;
 
     const response = await axios.post(
       "http://localhost:4000/BookingOperations/bookings",
-      bookingData
+      bookingData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
     );
 
     navigate("/booking-confirmation", { state: { booking: response.data } });
   } catch (err) {
-    setError(err.response?.data?.message || "Booking failed. Please try again.");
+    let errorMessage = "Booking failed. Please try again.";
+    
+    if (err.response) {
+      errorMessage = err.response.data?.message || errorMessage;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    setError(errorMessage);
+    
+    // If token is invalid or expired
+    if (err.response?.status === 401 || err.message.includes('token') || err.message.includes('login')) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      navigate('/login', { state: { from: '/PhotoshootBooking' } });
+    }
+    
+    console.error("Booking error:", err);
   } finally {
     setSubmitLoading(false);
   }
 };
 
+useEffect(() => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    navigate('/login', { state: { from: '/PhotoshootBooking' } });
+    return;
+  }
+
+  // Verify token is not expired
+  try {
+    const decoded = jwtDecode(token);
+    if (decoded.exp * 1000 < Date.now()) {
+      // Token expired, try to refresh it
+      refreshAuthToken().catch(() => {
+        navigate('/login', { state: { from: '/PhotoshootBooking' } });
+      });
+    }
+  } catch (err) {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    navigate('/login', { state: { from: '/PhotoshootBooking' } });
+  }
+}, [navigate]);
+
+
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p className="mt-4 text-gray-700">Loading session details...</p>
+        <FaSpinner className="animate-spin text-4xl text-amber-500 mx-auto mb-4" />
+        <p className="mt-4 text-gray-700">Loading your information...</p>
       </div>
     </div>
   );
@@ -240,33 +310,13 @@ const handleSubmit = async (e) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Session</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Information</h3>
         <p className="text-gray-600">{error}</p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
         >
           Try Again
-        </button>
-      </div>
-    </div>
-  );
-
-  if (!slot) return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="text-center p-6 max-w-md mx-auto bg-white rounded-lg shadow-md">
-        <div className="text-red-500 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Session Not Found</h3>
-        <p className="text-gray-600">The requested photoshoot session could not be found.</p>
-        <button 
-          onClick={() => navigate('/')}
-          className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
-        >
-          Browse Available Sessions
         </button>
       </div>
     </div>
@@ -294,7 +344,7 @@ const handleSubmit = async (e) => {
         <div className="max-w-6xl mx-auto">
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="md:flex">
-              {/* Photographer Details */}
+              {/* Photographer Details - Simplified */}
               <div className="md:w-2/5 p-6 bg-gradient-to-b from-amber-50 to-white border-b md:border-b-0 md:border-r border-gray-200">
                 <div className="sticky top-6">
                   <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
@@ -307,12 +357,12 @@ const handleSubmit = async (e) => {
                     <div className="flex items-center justify-center mb-4">
                       <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center overflow-hidden border-2 border-amber-300">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-center text-gray-800">{slot.photographer}</h3>
-                    <p className="text-sm text-amber-600 text-center">Professional Photographer</p>
+                    <h3 className="text-lg font-semibold text-center text-gray-800">Your Photo Session</h3>
+                    <p className="text-sm text-amber-600 text-center">Customized Photography Experience</p>
                   </div>
 
                   <div className="space-y-4">
@@ -324,27 +374,16 @@ const handleSubmit = async (e) => {
                         <p className="text-sm font-medium text-gray-700">Date & Time</p>
                       </div>
                       <p className="text-sm text-gray-600 ml-7">
-                        {new Date(slot.slotDate).toLocaleDateString('en-US', {
+                        {booking.date ? new Date(booking.date).toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric'
-                        })}
+                        }) : 'Not selected yet'}
                         <br />
-                        {slot.start} - {slot.end}
+                        {booking.time || 'Not selected yet'}
                       </p>
                     </div>
-
-                    {/* <div className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm">
-                      <div className="flex items-center mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <p className="text-sm font-medium text-gray-700">Location</p>
-                      </div>
-                      <p className="text-sm text-gray-600 ml-7">123 Creative Lane, Art District</p>
-                    </div> */}
 
                     {booking.packageType && (
                       <div className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm">
@@ -364,7 +403,7 @@ const handleSubmit = async (e) => {
                 </div>
               </div>
 
-              {/* Booking Form */}
+              {/* Booking Form - Same as before */}
               <div className="md:w-3/5 p-6 sm:p-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">
                   <span className="bg-gradient-to-r from-amber-500 to-amber-700 bg-clip-text text-transparent">
@@ -462,6 +501,33 @@ const handleSubmit = async (e) => {
                         </select>
                         {validationErrors.packageType && <p className="text-xs text-red-500 mt-1">{validationErrors.packageType}</p>}
                       </div>
+
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">Session Date *</label>
+                        <input
+                          type="date"
+                          className={`text-sm p-2.5 border bg-white  ${validationErrors.date ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                         
+                          name="date"
+                          value={booking.date}
+                          onChange={handleChange}
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-gray-700 mb-1">Session Time *</label>
+                        <input
+                          type="time"
+                          className={`text-sm p-2.5 border bg-white  ${validationErrors.time ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                          name="time"
+                          value={booking.time}
+                          onChange={handleChange}
+                        />
+                      </div>
+                      {validationErrors.slotId && (
+  <p className="text-xs text-red-500 mt-1">{validationErrors.slotId}</p>
+)}
 
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Number of Cameras</label>
@@ -582,12 +648,7 @@ const handleSubmit = async (e) => {
 
                   {/* Payment Information */}
                   <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
-                    {/* <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                      <span className="bg-amber-100 text-amber-800 rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">5</span>
-                      Payment Information
-                    </h3> */}
                     <div className="space-y-4">
-
                       {booking.packageType && (
                         <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
                           <div className="flex justify-between items-center">

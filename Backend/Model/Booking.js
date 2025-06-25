@@ -85,6 +85,7 @@ const bookingSchema = new mongoose.Schema({
     enum: ['Credit Card', 'Bank Transfer', 'Cash'],
     default: 'Credit Card',
   },
+  
   createdAt: {
     type: Date,
     default: Date.now,

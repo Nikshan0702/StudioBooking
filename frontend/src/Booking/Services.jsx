@@ -55,7 +55,7 @@ const Services = () => {
               Capturing your most precious moments with artistry and passion
             </p>
             <Link 
-              to="/bookings" 
+              to="/PhotoshootBooking" 
               className="bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 px-8 rounded-full transition-all duration-300 inline-block"
             >
               Book a Session

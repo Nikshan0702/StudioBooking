@@ -201,10 +201,120 @@ router.put('/slots/:id/book', authenticateUser, async (req, res) => {
 // BOOKING ROUTES
 
 // Create new booking
-router.post('/bookings', async (req, res) => {
+// router.post('/bookings', async (req, res) => {
+//     const {
+//         slotId,
+//         photographer,
+//         name,
+//         email,
+//         phone,
+//         sessionType,
+//         packageType,
+//         date,
+//         time,
+//         specialRequests,
+//         address,
+//         price,
+//         cameras,
+//         additionalEquipment,
+//         makeupArtist,
+//         outfitChanges,
+//         imageDeliveryFormat,
+//         paymentMethod
+//     } = req.body;
+
+//     try {
+//         // Validate slot ID
+//         if (!mongoose.Types.ObjectId.isValid(slotId)) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Invalid slot ID format"
+//             });
+//         }
+
+//         // Validate and parse date
+//         let bookingDate;
+//         try {
+//             bookingDate = new Date(date);
+//             if (isNaN(bookingDate.getTime())) {
+//                 throw new Error('Invalid date format');
+//             }
+//         } catch (err) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Invalid date format. Please use YYYY-MM-DD format"
+//             });
+//         }
+
+//         // Check if slot exists and is available
+//         const slot = await PhotoshootSlot.findById(slotId);
+        
+//         if (!slot) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Slot not found"
+//             });
+//         }
+        
+//         if (slot.isBooked) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Slot is already booked"
+//             });
+//         }
+
+//         // Create new booking with properly formatted date
+//         const booking = new Booking({
+//             slotId,
+//             photographer,
+//             name,
+//             email,
+//             phone,
+//             sessionType,
+//             packageType,
+//             date: bookingDate,  // Use the Date object
+//             time,
+//             specialRequests,
+//             address,
+//             status: 'Pending',
+//             price: Number(price),
+//             cameras,
+//             additionalEquipment,
+//             makeupArtist,
+//             outfitChanges,
+//             imageDeliveryFormat,
+//             paymentMethod
+//         });
+
+//         // Mark slot as booked
+//         slot.isBooked = true;
+//         await slot.save();
+
+//         const createdBooking = await booking.save();
+        
+//         res.status(201).json({
+//             success: true,
+//             message: "Booking created successfully",
+//             data: createdBooking
+//         });
+//     } catch (err) {
+//         console.error('Error creating booking:', err);
+//         if (err.name === 'ValidationError') {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Validation error",
+//                 error: err.message
+//             });
+//         }
+//         res.status(500).json({
+//             success: false,
+//             message: "Error creating booking",
+//             error: err.message
+//         });
+//     }
+// });
+router.post('/bookings', authenticateUser, async (req, res) => {
     const {
-        slotId,
-        photographer,
         name,
         email,
         phone,
@@ -220,11 +330,24 @@ router.post('/bookings', async (req, res) => {
         makeupArtist,
         outfitChanges,
         imageDeliveryFormat,
-        paymentMethod
+        paymentMethod,
+        slotId,
+        userId
     } = req.body;
 
     try {
-        // Validate slot ID
+        // 1. Validate required fields
+        const requiredFields = ['name', 'email', 'phone', 'sessionType', 'packageType', 'date', 'time', 'slotId'];
+        const missingFields = requiredFields.filter(field => !req.body[field]);
+        
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Missing required fields: ${missingFields.join(', ')}`
+            });
+        }
+
+        // 2. Validate slot ID format
         if (!mongoose.Types.ObjectId.isValid(slotId)) {
             return res.status(400).json({
                 success: false,
@@ -232,30 +355,14 @@ router.post('/bookings', async (req, res) => {
             });
         }
 
-        // Validate and parse date
-        let bookingDate;
-        try {
-            bookingDate = new Date(date);
-            if (isNaN(bookingDate.getTime())) {
-                throw new Error('Invalid date format');
-            }
-        } catch (err) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid date format. Please use YYYY-MM-DD format"
-            });
-        }
-
-        // Check if slot exists and is available
+        // 3. Check if slot exists and is available
         const slot = await PhotoshootSlot.findById(slotId);
-        
         if (!slot) {
             return res.status(404).json({
                 success: false,
                 message: "Slot not found"
             });
         }
-        
         if (slot.isBooked) {
             return res.status(400).json({
                 success: false,
@@ -263,53 +370,75 @@ router.post('/bookings', async (req, res) => {
             });
         }
 
-        // Create new booking with properly formatted date
+        // 4. Parse and validate date
+        const bookingDate = new Date(date);
+        if (isNaN(bookingDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid date format. Please use YYYY-MM-DD format"
+            });
+        }
+
+        // 5. Create the booking
         const booking = new Booking({
             slotId,
-            photographer,
+            photographer: "Default Photographer", // You might want to get this from slot
             name,
             email,
             phone,
             sessionType,
             packageType,
-            date: bookingDate,  // Use the Date object
+            date: bookingDate,
             time,
-            specialRequests,
-            address,
+            specialRequests: specialRequests || undefined,
+            address: address || undefined,
             status: 'Pending',
-            price: Number(price),
-            cameras,
-            additionalEquipment,
-            makeupArtist,
-            outfitChanges,
-            imageDeliveryFormat,
-            paymentMethod
+            price: Number(price) || 0,
+            cameras: cameras || "1",
+            additionalEquipment: additionalEquipment || false,
+            makeupArtist: makeupArtist || false,
+            outfitChanges: outfitChanges || "0",
+            imageDeliveryFormat: imageDeliveryFormat || "Digital",
+            paymentMethod: paymentMethod || "Credit Card",
+            userId: userId || req.userId // Use either from request or from auth token
         });
 
-        // Mark slot as booked
+        // 6. Mark slot as booked and save both
         slot.isBooked = true;
-        await slot.save();
+        await Promise.all([slot.save(), booking.save()]);
 
-        const createdBooking = await booking.save();
-        
+        // 7. Return success response
         res.status(201).json({
             success: true,
             message: "Booking created successfully",
-            data: createdBooking
+            data: {
+                ...booking.toObject(),
+                slotDetails: {
+                    date: slot.slotDate,
+                    start: slot.start,
+                    end: slot.end
+                }
+            }
         });
+
     } catch (err) {
         console.error('Error creating booking:', err);
+        
         if (err.name === 'ValidationError') {
             return res.status(400).json({
                 success: false,
                 message: "Validation error",
-                error: err.message
+                errors: Object.entries(err.errors).reduce((acc, [field, error]) => {
+                    acc[field] = error.message;
+                    return acc;
+                }, {})
             });
         }
+
         res.status(500).json({
             success: false,
-            message: "Error creating booking",
-            error: err.message
+            message: "Internal server error",
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
     }
 });
