@@ -34,7 +34,7 @@ const Login = () => {
         if (response.data.user.type === 'admin') {
           navigate('/AdminDashboard');
         } else {
-          navigate('/Profile');
+          navigate('/Services');
         }
       } else {
         throw new Error('Invalid response from server');

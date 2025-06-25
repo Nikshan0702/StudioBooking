@@ -125,10 +125,11 @@ const Profile = () => {
     
       if (loading.profile && !profile.name) {
         return (
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center">
-            <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md">
-              <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-              <p className="text-lg text-gray-700 font-medium">Loading your profile...</p>
+            <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center">
+            <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md border border-amber-200">
+              <FaSpinner className="animate-spin text-4xl text-amber-600 mx-auto mb-4" />
+              <p className="text-lg text-gray-800 font-medium">Loading your profile...</p>
+              <p className="text-sm text-amber-700 mt-2">We're preparing your experience</p>
             </div>
           </div>
         );
