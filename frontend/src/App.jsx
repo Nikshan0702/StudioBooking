@@ -5,6 +5,7 @@ import Home from './assets/Home';
 import Login from './Clients/Login';
 import Register from './Clients/Register';
 import PhotoshootBooking from './Booking/PhotoshootBooking';
+import AdminBookings from './Booking/AdminBookings';
 import About from './assets/About';
 import Services from './Booking/Services';
 import Profile from './Clients/Profile';
@@ -19,6 +20,7 @@ function App() {
       <Route path="/login" element={< Login/>} />
       <Route path="/Register" element={< Register/>} />
       <Route path="/PhotoshootBooking" element={< PhotoshootBooking/>} />
+      <Route path="/AdminBookings" element={< AdminBookings/>} />
       <Route path="/About" element={< About/>} />
       <Route path="/Services" element={< Services/>} />
       <Route path="/Profile" element={< Profile/>} />

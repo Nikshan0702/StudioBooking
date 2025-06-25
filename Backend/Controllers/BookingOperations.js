@@ -313,7 +313,7 @@ router.put('/slots/:id/book', authenticateUser, async (req, res) => {
 //         });
 //     }
 // });
-router.post('/bookings', authenticateUser, async (req, res) => {
+router.post('/bookings', async (req, res) => {
     const {
         name,
         email,
@@ -348,27 +348,27 @@ router.post('/bookings', authenticateUser, async (req, res) => {
         }
 
         // 2. Validate slot ID format
-        if (!mongoose.Types.ObjectId.isValid(slotId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid slot ID format"
-            });
-        }
+        // if (!mongoose.Types.ObjectId.isValid(slotId)) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "Invalid slot ID format"
+        //     });
+        // }
 
         // 3. Check if slot exists and is available
-        const slot = await PhotoshootSlot.findById(slotId);
-        if (!slot) {
-            return res.status(404).json({
-                success: false,
-                message: "Slot not found"
-            });
-        }
-        if (slot.isBooked) {
-            return res.status(400).json({
-                success: false,
-                message: "Slot is already booked"
-            });
-        }
+        // const slot = await PhotoshootSlot.findById(slotId);
+        // if (!slot) {
+        //     return res.status(404).json({
+        //         success: false,
+        //         message: "Slot not found"
+        //     });
+        // }
+        // if (slot.isBooked) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "Slot is already booked"
+        //     });
+        // }
 
         // 4. Parse and validate date
         const bookingDate = new Date(date);
@@ -404,8 +404,8 @@ router.post('/bookings', authenticateUser, async (req, res) => {
         });
 
         // 6. Mark slot as booked and save both
-        slot.isBooked = true;
-        await Promise.all([slot.save(), booking.save()]);
+        // slot.isBooked = true;
+        // await Promise.all([slot.save(), booking.save()]);
 
         // 7. Return success response
         res.status(201).json({
@@ -444,7 +444,7 @@ router.post('/bookings', authenticateUser, async (req, res) => {
 });
 
 // Get all bookings (Admin only)
-router.get('/bookings', authenticateUser, isAdmin, async (req, res) => {
+router.get('/bookings', authenticateUser, async (req, res) => {
     try {
         const bookings = await Booking.find({}).populate('slotId', 'slotDate start end');
         res.json({

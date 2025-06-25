@@ -32,7 +32,7 @@ const Login = () => {
           localStorage.setItem('userData', JSON.stringify(response.data.user));
         }
         if (response.data.user.type === 'admin') {
-          navigate('/AdminDashboard');
+          navigate('/AdminBookings');
         } else {
           navigate('/Services');
         }

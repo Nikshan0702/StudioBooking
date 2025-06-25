@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaSpinner } from "react-icons/fa";
-import {jwtDecode} from 'jwt-decode';
-
+import { jwtDecode } from 'jwt-decode';
 
 const PhotoshootBooking = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const [authToken, setAuthToken] = useState(localStorage.getItem('authToken') || null);
   const navigate = useNavigate();
 
   const [booking, setBooking] = useState({
@@ -108,29 +108,63 @@ const PhotoshootBooking = () => {
   }
 }, [booking.date, booking.time]);
 
-// Update your refreshAuthToken function
+const getValidToken = async () => {
+    let token = authToken || localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    try {
+      const decoded = jwtDecode(token);
+      const isExpired = decoded.exp * 1000 < Date.now();
+      
+      console.log("Token expiration status:", isExpired ? "EXPIRED" : "VALID");
+      
+      if (isExpired) {
+        console.log("Token expired, attempting refresh...");
+        token = await refreshAuthToken();
+        localStorage.setItem('authToken', token);
+        setAuthToken(token);
+        return token;
+      }
+      return token;
+    } catch (decodeError) {
+      console.error('Token verification failed:', decodeError);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      setAuthToken(null);
+      throw new Error('Invalid token. Please login again.');
+    }
+};
+
+// In your refreshAuthToken function:
 const refreshAuthToken = async () => {
   try {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
-      // No refresh token available, force logout
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      navigate('/login', { state: { from: '/PhotoshootBooking' } });
-      throw new Error('Session expired. Please login again.');
+      throw new Error('No refresh token available');
     }
+    
+    console.log("Attempting token refresh...");
     
     const response = await axios.post('http://localhost:4000/auth/refresh', {
       refreshToken
     });
     
+    if (!response.data.accessToken) {
+      throw new Error('No access token received');
+    }
+    
+    console.log("Token refresh successful");
     localStorage.setItem('authToken', response.data.accessToken);
-    // Store the new refresh token if your backend returns one
+    
     if (response.data.refreshToken) {
       localStorage.setItem('refreshToken', response.data.refreshToken);
     }
+    
     return response.data.accessToken;
   } catch (err) {
+    console.error("Refresh token error:", err.response?.data || err.message);
     localStorage.removeItem('authToken');
     localStorage.removeItem('refreshToken');
     navigate('/login', { state: { from: '/PhotoshootBooking' } });
@@ -194,80 +228,91 @@ const refreshAuthToken = async () => {
     return isValid;
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+   useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        if (!authToken) {
+          navigate('/login', { state: { from: '/PhotoshootBooking' } });
+          return;
+        }
 
-  setSubmitLoading(true);
-  try {
-    let token = localStorage.getItem('authToken');
-    if (!token) {
-      throw new Error('Please login to book a session');
-    }
-
-    // Check if token is expired
-    let decoded;
-    try {
-      decoded = jwtDecode(token);
-    } catch (err) {
-      // Invalid token format
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      navigate('/login', { state: { from: '/PhotoshootBooking' } });
-      return;
-    }
-
-    if (decoded.exp * 1000 < Date.now()) {
-      token = await refreshAuthToken();
-    }
-
-    const bookingData = {
-      ...booking,
-      price: isNaN(Number(booking.price)) ? 0 : Number(booking.price),
-      date: booking.date,
-      userId: user?._id || null,
-      photographer: "Default Photographer"
+        await getValidToken();
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        navigate('/login', { state: { from: '/PhotoshootBooking' } });
+      }
     };
 
-    // Clean up empty fields
-    if (!bookingData.specialRequests) delete bookingData.specialRequests;
-    if (!bookingData.address) delete bookingData.address;
+    verifyToken();
+  }, [authToken, navigate]);
 
-    const response = await axios.post(
-      "http://localhost:4000/BookingOperations/bookings",
-      bookingData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setSubmitLoading(true);
+    try {
+      // Get a fresh token right before making the request
+      const token = await getValidToken();
+      
+      console.log("Current token:", token);
+      
+      const bookingData = {
+        ...booking,
+        price: isNaN(Number(booking.price)) ? 0 : Number(booking.price),
+        date: booking.date,
+        userId: user?._id || null,
+        photographer: "Default Photographer"
+      };
+
+      // Clean up empty fields
+      if (!bookingData.specialRequests) delete bookingData.specialRequests;
+      if (!bookingData.address) delete bookingData.address;
+         console.log("Booking Data:", bookingData);
+   
+
+      const response = await axios.post(
+        "http://localhost:4000/BookingOperations/bookings",
+        bookingData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true
         }
-      }
-    );
+      );
 
-    navigate("/booking-confirmation", { state: { booking: response.data } });
-  } catch (err) {
-    let errorMessage = "Booking failed. Please try again.";
-    
-    if (err.response) {
-      errorMessage = err.response.data?.message || errorMessage;
-    } else if (err.message) {
-      errorMessage = err.message;
+      navigate("/booking-confirmation", { state: { booking: response.data } });
+    } catch (err) {
+      let errorMessage = "Booking failed. Please try again.";
+      
+      if (err.response) {
+        if (err.response.status === 401) {
+          errorMessage = "Session expired. Please login again.";
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          setAuthToken(null);
+          navigate('/login', { state: { from: '/PhotoshootBooking' } });
+        } else {
+          errorMessage = err.response.data?.message || errorMessage;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      console.error("Booking error details:", {
+        message: err.message,
+        response: err.response?.data,
+        stack: err.stack
+      });
+    } finally {
+      setSubmitLoading(false);
     }
-    
-    setError(errorMessage);
-    
-    // If token is invalid or expired
-    if (err.response?.status === 401 || err.message.includes('token') || err.message.includes('login')) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      navigate('/login', { state: { from: '/PhotoshootBooking' } });
-    }
-    
-    console.error("Booking error:", err);
-  } finally {
-    setSubmitLoading(false);
-  }
-};
+  };
 
 useEffect(() => {
   const token = localStorage.getItem('authToken');
@@ -302,26 +347,27 @@ useEffect(() => {
     </div>
   );
 
-  if (error) return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="text-center p-6 max-w-md mx-auto bg-white rounded-lg shadow-md">
-        <div className="text-red-500 mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center p-6 max-w-md mx-auto bg-white rounded-lg shadow-md">
+          <div className="text-red-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Error</h3>
+          <p className="text-gray-600">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Information</h3>
-        <p className="text-gray-600">{error}</p>
-        <button 
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors"
-        >
-          Try Again
-        </button>
       </div>
-    </div>
-  );
-
+    );
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Progress Bar */}

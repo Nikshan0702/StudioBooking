@@ -2,8 +2,7 @@ import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema({
   slotId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'PhotoshootSlot',
+    type: String,
     required: true,
   },
   photographer: {
