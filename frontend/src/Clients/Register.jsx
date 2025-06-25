@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../assets/Header';
 import banner from '../Images/banner2.jpg';
+import { useState } from 'react';
+import axios from 'axios'; // Added missing axios import
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,30 +15,34 @@ const Register = () => {
     password: '',
     cpassword: ''
   });
-const [error, setError] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added loading state
 
-
-const handleChange = (event) => {
+  const handleChange = (event) => {
     setFormData({ ...formData, [event.target.name]: event.target.value });
-};
+  };
 
-const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsSubmitting(true);
 
     if (formData.password !== formData.cpassword) {
-        setError("Passwords do not match!");
-        return;
+      setError("Passwords do not match!");
+      setIsSubmitting(false);
+      return;
     }
     setError('');
 
     try {
-        const response = await axios.post('http://localhost:4000/UserOperations/register', formData);
-        alert("Your Profile Created!");
-        navigate('/Login');
+      const response = await axios.post('http://localhost:4000/UserOperations/register', formData);
+      alert("Your Profile Created!");
+      navigate('/Login');
     } catch (error) {
-        setError(error.response?.data?.message || "Error registering user!");
+      setError(error.response?.data?.message || "Error registering user!");
+    } finally {
+      setIsSubmitting(false);
     }
-};
+  };
 
   return (
     <div className="relative min-h-screen">
@@ -69,6 +75,15 @@ const handleSubmit = async (event) => {
               </p>
             </div>
             
+            {/* Error Message */}
+            {error && (
+              <div className="px-6 pt-4">
+                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded">
+                  <p className="text-sm">{error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Registration Form */}
             <form onSubmit={handleSubmit} className="p-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,6 +163,7 @@ const handleSubmit = async (event) => {
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    minLength="6"
                     className="w-full px-4 py-3 bg-white/80 border border-gray-300/70 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
                   />
                 </div>
@@ -164,6 +180,7 @@ const handleSubmit = async (event) => {
                     value={formData.cpassword}
                     onChange={handleChange}
                     required
+                    minLength="6"
                     className="w-full px-4 py-3 bg-white/80 border border-gray-300/70 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
                   />
                 </div>
@@ -173,9 +190,12 @@ const handleSubmit = async (event) => {
               <div className="mt-8">
                 <button
                   type="submit"
-                  className="w-full py-3 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                  disabled={isSubmitting}
+                  className={`w-full py-3 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ${
+                    isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
+                  }`}
                 >
-                  Register Now
+                  {isSubmitting ? 'Registering...' : 'Register Now'}
                 </button>
               </div>
             </form>

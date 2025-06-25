@@ -7,6 +7,7 @@ import Register from './Clients/Register';
 import PhotoshootBooking from './Booking/PhotoshootBooking';
 import About from './assets/About';
 import Services from './Booking/Services';
+import Profile from './Clients/Profile';
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
       <Route path="/PhotoshootBooking" element={< PhotoshootBooking/>} />
       <Route path="/About" element={< About/>} />
       <Route path="/Services" element={< Services/>} />
+      <Route path="/Profile" element={< Profile/>} />
       
     </Routes>
 
