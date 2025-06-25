@@ -3,6 +3,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv"; 
 import UserOperations from './Controllers/UserOperations.js';
+import BookingOperation from './Controllers/BookingOperations.js'
 
 
 dotenv.config();
@@ -25,6 +26,8 @@ app.use(express.json());
 
 
 app.use("/UserOperations", UserOperations);
+app.use("/BookingOperations", BookingOperation);
+
 
 
 

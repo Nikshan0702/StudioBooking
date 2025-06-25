@@ -53,24 +53,32 @@ const PhotoshootBooking = () => {
   };
 
   useEffect(() => {
-    const fetchSlot = async () => {
-      try {
-        const response = await axios.get(`/api/photoshoot-slots/${id}`);
-        setSlot(response.data);
-        setBooking(prev => ({
-          ...prev,
-          date: response.data.slotDate,
-          time: `${response.data.start} to ${response.data.end}`
-        }));
-        setLoading(false);
-      } catch (err) {
-        setError(err.message || "Failed to load slot details");
-        setLoading(false);
+  const fetchSlot = async () => {
+    try {
+      const response = await axios.get(`http://localhost:4000/BookingOperations/slots/${id}`);
+      const slotData = response.data;
+      
+      // Ensure the date is properly formatted
+      const slotDate = new Date(slotData.slotDate);
+      if (isNaN(slotDate.getTime())) {
+        throw new Error('Invalid date received from server');
       }
-    };
 
-    fetchSlot();
-  }, [id]);
+      setSlot(slotData);
+      setBooking(prev => ({
+        ...prev,
+        date: slotDate.toISOString().split('T')[0], // Store as YYYY-MM-DD
+        time: `${slotData.start} to ${slotData.end}`
+      }));
+      setLoading(false);
+    } catch (err) {
+      setError(err.message || "Failed to load slot details");
+      setLoading(false);
+    }
+  };
+
+  fetchSlot();
+}, [id]);
 
   useEffect(() => {
     if (booking.packageType) {
@@ -132,24 +140,88 @@ const PhotoshootBooking = () => {
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+//   const handleSubmit = async (e) => {
+//   e.preventDefault();
+//   if (!validateForm()) return;
 
-    setSubmitLoading(true);
-    try {
-      await axios.post("/api/photoshoot-bookings", {
-        ...booking,
-        slotId: id,
-        photographer: slot.photographer
-      });
-      navigate("/booking-confirmation", { state: { booking } });
-    } catch (err) {
-      setError(err.response?.data?.message || "Booking failed. Please try again.");
-    } finally {
-      setSubmitLoading(false);
-    }
-  };
+//   setSubmitLoading(true);
+//   try {
+//     // Format the data to match backend expectations
+//     const bookingData = {
+//       name: booking.name,
+//       email: booking.email,
+//       phone: booking.phone,
+//       sessionType: booking.sessionType,
+//       packageType: booking.packageType,
+//       date: new Date(booking.date).toISOString(), // Convert to ISO string
+//       time: booking.time,
+//       specialRequests: booking.specialRequests,
+//       address: booking.address,
+//       status: "Pending",
+//       price: booking.price,
+//       cameras: booking.cameras,
+//       additionalEquipment: booking.additionalEquipment,
+//       makeupArtist: booking.makeupArtist,
+//       outfitChanges: booking.outfitChanges,
+//       imageDeliveryFormat: booking.imageDeliveryFormat,
+//       paymentMethod: booking.paymentMethod,
+//       slotId: id,
+//       photographer: slot.photographer
+//     };
+
+//     console.log("Submitting booking:", bookingData); // For debugging
+
+//     const response = await axios.post(
+//       "http://localhost:4000/BookingOperations/bookings",
+//       bookingData,
+//       {
+//         headers: {
+//           'Content-Type': 'application/json'
+//         }
+//       }
+//     );
+
+//     navigate("/booking-confirmation", { state: { booking: response.data } });
+//   } catch (err) {
+//     console.error("Booking error:", err.response?.data || err.message);
+//     setError(
+//       err.response?.data?.message || 
+//       err.response?.data?.error || 
+//       "Booking failed. Please try again."
+//     );
+//   } finally {
+//     setSubmitLoading(false);
+//   }
+// };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validateForm()) return;
+
+  setSubmitLoading(true);
+  try {
+    // Format the date as YYYY-MM-DD
+    const formattedDate = new Date(booking.date).toISOString().split('T')[0];
+
+    const bookingData = {
+      ...booking,
+      slotId: id,
+      photographer: slot.photographer,
+      date: formattedDate,
+      price: Number(booking.price)
+    };
+
+    const response = await axios.post(
+      "http://localhost:4000/BookingOperations/bookings",
+      bookingData
+    );
+
+    navigate("/booking-confirmation", { state: { booking: response.data } });
+  } catch (err) {
+    setError(err.response?.data?.message || "Booking failed. Please try again.");
+  } finally {
+    setSubmitLoading(false);
+  }
+};
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

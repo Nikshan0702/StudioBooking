@@ -116,12 +116,15 @@ const Profile = () => {
           setLoading(prev => ({ ...prev, update: false }));
         }
       };
+
+
     
       const handleLogout = () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
         navigate('/login');
       };
+
     
       if (loading.profile && !profile.name) {
         return (
@@ -326,7 +329,7 @@ const Profile = () => {
                       <FaCalendarAlt className="text-5xl text-gray-400 mx-auto mb-4" />
                       <h3 className="text-xl font-medium text-gray-700 mb-2">No bookings yet</h3>
                       <p className="text-gray-500 mb-4">You haven't made any bookings with our studio</p>
-                      <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                      <button  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
                         Book a Session
                       </button>
                     </div>
