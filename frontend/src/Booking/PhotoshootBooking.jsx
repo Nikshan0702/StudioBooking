@@ -263,7 +263,7 @@ const PhotoshootBooking = () => {
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm">
+                    {/* <div className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm">
                       <div className="flex items-center mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -272,7 +272,7 @@ const PhotoshootBooking = () => {
                         <p className="text-sm font-medium text-gray-700">Location</p>
                       </div>
                       <p className="text-sm text-gray-600 ml-7">123 Creative Lane, Art District</p>
-                    </div>
+                    </div> */}
 
                     {booking.packageType && (
                       <div className="p-4 rounded-lg bg-white border border-gray-100 shadow-sm">
@@ -283,7 +283,7 @@ const PhotoshootBooking = () => {
                           <p className="text-sm font-medium text-gray-700">Package</p>
                         </div>
                         <p className="text-sm font-semibold text-amber-600 ml-7">
-                          {booking.packageType} - {booking.price.startsWith('$') ? booking.price : `$${booking.price}`}
+                          {booking.packageType} - {booking.price.startsWith('$') ? booking.price : `${booking.price} LKR`}
                         </p>
                         <p className="text-xs text-gray-500 ml-7 mt-1">{packageDetails[booking.packageType]?.description}</p>
                       </div>
@@ -312,7 +312,7 @@ const PhotoshootBooking = () => {
                         <label className="text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                         <input
                           type="text"
-                          className={`text-sm p-2.5 border ${validationErrors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                          className={`text-sm p-2.5 border bg-white  ${validationErrors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
                           name="name"
                           value={booking.name}
                           onChange={handleChange}
@@ -325,7 +325,7 @@ const PhotoshootBooking = () => {
                         <label className="text-sm font-medium text-gray-700 mb-1">Email *</label>
                         <input
                           type="email"
-                          className={`text-sm p-2.5 border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                          className={`text-sm p-2.5 border bg-white  ${validationErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
                           name="email"
                           value={booking.email}
                           onChange={handleChange}
@@ -338,7 +338,7 @@ const PhotoshootBooking = () => {
                         <label className="text-sm font-medium text-gray-700 mb-1">Phone *</label>
                         <input
                           type="tel"
-                          className={`text-sm p-2.5 border ${validationErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                          className={`text-sm p-2.5 border bg-white  ${validationErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
                           name="phone"
                           value={booking.phone}
                           onChange={handleChange}
@@ -359,7 +359,7 @@ const PhotoshootBooking = () => {
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Session Type *</label>
                         <select
-                          className={`text-sm p-2.5 border ${validationErrors.sessionType ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                          className={`text-sm p-2.5 border bg-white  ${validationErrors.sessionType ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
                           name="sessionType"
                           value={booking.sessionType}
                           onChange={handleChange}
@@ -377,15 +377,15 @@ const PhotoshootBooking = () => {
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Package *</label>
                         <select
-                          className={`text-sm p-2.5 border ${validationErrors.packageType ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                          className={`text-sm p-2.5 border bg-white  ${validationErrors.packageType ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
                           name="packageType"
                           value={booking.packageType}
                           onChange={handleChange}
                         >
                           <option value="">Select package</option>
-                          <option value="Basic">Basic ($150)</option>
-                          <option value="Standard">Standard ($300)</option>
-                          <option value="Premium">Premium ($500)</option>
+                          <option value="Basic">Basic (150)</option>
+                          <option value="Standard">Standard (300)</option>
+                          <option value="Premium">Premium (500)</option>
                           <option value="Custom">Custom (Quote)</option>
                         </select>
                         {validationErrors.packageType && <p className="text-xs text-red-500 mt-1">{validationErrors.packageType}</p>}
@@ -394,29 +394,29 @@ const PhotoshootBooking = () => {
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Number of Cameras</label>
                         <select
-                          className="text-sm p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          className="text-sm p-2.5 border bg-white  border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                           name="cameras"
                           value={booking.cameras}
                           onChange={handleChange}
                         >
                           <option value="1">1 Camera</option>
-                          <option value="2">2 Cameras (+$50)</option>
-                          <option value="3">3+ Cameras (+$100)</option>
+                          <option value="2">2 Cameras (+50)</option>
+                          <option value="3">3+ Cameras (+100)</option>
                         </select>
                       </div>
 
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Outfit Changes</label>
                         <select
-                          className="text-sm p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          className="text-sm p-2.5 border bg-white  border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                           name="outfitChanges"
                           value={booking.outfitChanges}
                           onChange={handleChange}
                         >
                           <option value="0">No changes</option>
-                          <option value="1">1 change (+$25)</option>
-                          <option value="2">2 changes (+$40)</option>
-                          <option value="3">3+ changes (+$60)</option>
+                          <option value="1">1 change (+25)</option>
+                          <option value="2">2 changes (+40)</option>
+                          <option value="3">3+ changes (+60)</option>
                         </select>
                       </div>
                     </div>
@@ -425,14 +425,14 @@ const PhotoshootBooking = () => {
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Image Delivery Format</label>
                         <select
-                          className="text-sm p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          className="text-sm p-2.5 bg-white  border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                           name="imageDeliveryFormat"
                           value={booking.imageDeliveryFormat}
                           onChange={handleChange}
                         >
                           <option value="Digital">Digital Only</option>
                           <option value="Digital+Print">Digital + Prints</option>
-                          <option value="Album">Photo Album (+$75)</option>
+                          <option value="Album">Photo Album (+75)</option>
                         </select>
                       </div>
                     </div>
@@ -452,10 +452,10 @@ const PhotoshootBooking = () => {
                           name="additionalEquipment"
                           checked={booking.additionalEquipment}
                           onChange={handleChange}
-                          className="h-4 w-4 text-amber-500 focus:ring-amber-500 border-gray-300 rounded"
+                          className="h-4 w-4  text-amber-500 bg-white  focus:ring-amber-500 border-gray-300 rounded"
                         />
                         <label htmlFor="additionalEquipment" className="ml-2 text-sm text-gray-700">
-                          Additional Equipment (lighting, drones, etc.) (+$100)
+                          Additional Equipment (lighting, drones, etc.) (+100)
                         </label>
                       </div>
 
@@ -469,7 +469,7 @@ const PhotoshootBooking = () => {
                           className="h-4 w-4 text-amber-500 focus:ring-amber-500 border-gray-300 rounded"
                         />
                         <label htmlFor="makeupArtist" className="ml-2 text-sm text-gray-700">
-                          Professional Makeup Artist (+$150)
+                          Professional Makeup Artist (+150)
                         </label>
                       </div>
                     </div>
@@ -483,10 +483,10 @@ const PhotoshootBooking = () => {
                     </h3>
                     <div className="space-y-4">
                       <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-1">Shooting Address</label>
+                        <label className="text-sm font-medium  text-gray-700 mb-1">Shooting Address</label>
                         <input
                           type="text"
-                          className="text-sm p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          className="text-sm p-2.5 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                           name="address"
                           value={booking.address}
                           onChange={handleChange}
@@ -497,7 +497,7 @@ const PhotoshootBooking = () => {
                       <div className="flex flex-col">
                         <label className="text-sm font-medium text-gray-700 mb-1">Special Requests</label>
                         <textarea
-                          className="text-sm p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                          className="text-sm p-2.5 border bg-white border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                           name="specialRequests"
                           value={booking.specialRequests}
                           onChange={handleChange}
@@ -510,32 +510,18 @@ const PhotoshootBooking = () => {
 
                   {/* Payment Information */}
                   <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    {/* <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                       <span className="bg-amber-100 text-amber-800 rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">5</span>
                       Payment Information
-                    </h3>
+                    </h3> */}
                     <div className="space-y-4">
-                      <div className="flex flex-col">
-                        <label className="text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                        <select
-                          className="text-sm p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                          name="paymentMethod"
-                          value={booking.paymentMethod}
-                          onChange={handleChange}
-                        >
-                          <option value="Credit Card">Credit Card</option>
-                          <option value="PayPal">PayPal</option>
-                          <option value="Bank Transfer">Bank Transfer</option>
-                          <option value="Cash">Cash (On Location)</option>
-                        </select>
-                      </div>
 
                       {booking.packageType && (
                         <div className="p-4 bg-amber-50 rounded-lg border border-amber-100">
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium text-gray-700">Estimated Total:</span>
                             <span className="text-lg font-bold text-amber-600">
-                              {booking.price.startsWith('$') ? booking.price : `$${booking.price}`}
+                              {booking.price.startsWith('$') ? booking.price : `${booking.price} LKR`}
                             </span>
                           </div>
                           <p className="text-xs text-gray-500 mt-1">Final price may vary based on additional services</p>

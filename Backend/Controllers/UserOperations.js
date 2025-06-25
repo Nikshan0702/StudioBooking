@@ -48,7 +48,7 @@ const authenticateUser = (req, res, next) => {
 
 // Registration Endpoint
 router.post("/register", async (req, res) => {
-    const { name, email, mobile, type, gender, password } = req.body;
+    const { name, email, mobile, address, password } = req.body;
 
     try {
         const salt = await bcrypt.genSalt(10);
@@ -58,8 +58,7 @@ router.post("/register", async (req, res) => {
             name,
             email,
             mobile,
-            type,
-            gender,
+            address,
             password: hashedPassword
         });
 
@@ -159,12 +158,12 @@ router.put("/update/:id", authenticateUser, async (req, res) => {
     }
 
     try {
-        const { name, mobile, gender } = req.body;
+        const { name, mobile, address } = req.body;
         const updates = {};
 
         if (name) updates.name = name;
         if (mobile) updates.mobile = mobile;
-        if (gender) updates.gender = gender;
+        if (address) updates.address = address;
 
         const updatedUser = await UserModel.findByIdAndUpdate(
           id,

@@ -26,20 +26,20 @@ const Header = () => {
           <ul className="flex space-x-1">
             <li>
               <Link 
-                to="/portfolio" 
+                to="/" 
                 className="block px-5 py-3 font-medium hover:text-amber-400 rounded-lg transition-all duration-300"
               >
-                Portfolio
+                Home
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link 
-                to="/services" 
+                to="/About" 
                 className="block px-5 py-3 font-medium hover:text-amber-400 rounded-lg transition-all duration-300"
               >
                 Services
               </Link>
-            </li>
+            </li> */}
             <li>
               <Link 
                 to="/pricing" 
@@ -50,7 +50,7 @@ const Header = () => {
             </li>
             <li>
               <Link 
-                to="/about" 
+                to="/About" 
                 className="block px-5 py-3 font-medium hover:text-amber-400 rounded-lg transition-all duration-300"
               >
                 About
@@ -68,10 +68,10 @@ const Header = () => {
             Contact
           </Link>
           <Link 
-            to="/book" 
+            to="/login" 
             className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
           >
-            Book Now
+            Login
           </Link>
         </div>
       </div>

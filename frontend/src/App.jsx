@@ -5,6 +5,8 @@ import Home from './assets/Home';
 import Login from './Clients/Login';
 import Register from './Clients/Register';
 import PhotoshootBooking from './Booking/PhotoshootBooking';
+import About from './assets/About';
+import Services from './Booking/Services';
 
 function App() {
 
@@ -16,6 +18,8 @@ function App() {
       <Route path="/login" element={< Login/>} />
       <Route path="/Register" element={< Register/>} />
       <Route path="/PhotoshootBooking" element={< PhotoshootBooking/>} />
+      <Route path="/About" element={< About/>} />
+      <Route path="/Services" element={< Services/>} />
       
     </Routes>
 

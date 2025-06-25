@@ -1,8 +1,55 @@
 import React from 'react';
 import banner3 from '../Images/banner3.jpg';
 import Header from '../assets/Header';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+
+  // const [email, setEmail] = useState('');
+  // const [password, setPassword] = useState('');
+  // const [error, setError] = useState('');
+  // const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await axios.post(
+        'http://localhost:4000/UserOperations/login',
+        { email, password },
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+
+      if (response.data && response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+        if (response.data.user) {
+          localStorage.setItem('userData', JSON.stringify(response.data.user));
+        }
+        if (response.data.user.type === 'admin') {
+          navigate('/AdminDashboard'); // Change this to your admin route
+        } else {
+          navigate('/Services');
+        }
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Invalid login credentials');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+
+
+
+
   return (
     <div className="relative min-h-screen">
       {/* Transparent Header */}
@@ -42,7 +89,7 @@ const Login = () => {
                 </label>
                 <input
                   type="email"
-                  className="w-full px-4 py-3 bg-white bg-white/15 border border-white/30 rounded-lg text-white placeholder-black/60 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white bg-white/15 border border-white/30 rounded-lg text-black placeholder-black/60 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-transparent transition-all"
                   placeholder="nikshan@email.com"
                 />
               </div>
@@ -53,7 +100,7 @@ const Login = () => {
                 </label>
                 <input
                   type="password"
-                  className="w-full px-4 py-3 bg-white border border-white/30 rounded-lg text-white placeholder-black/60 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 bg-white border border-white/30 rounded-lg text-black placeholder-black/60 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-transparent transition-all"
                   placeholder="••••••••"
                 />
               </div>

@@ -13,15 +13,30 @@ const Register = () => {
     password: '',
     cpassword: ''
   });
+const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    setFormData({...formData, [e.target.name]: e.target.value});
-  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle registration logic here
-  };
+const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
+};
+
+const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (formData.password !== formData.cpassword) {
+        setError("Passwords do not match!");
+        return;
+    }
+    setError('');
+
+    try {
+        const response = await axios.post('http://localhost:4000/UserOperations/register', formData);
+        alert("Your Profile Created!");
+        navigate('/Login');
+    } catch (error) {
+        setError(error.response?.data?.message || "Error registering user!");
+    }
+};
 
   return (
     <div className="relative min-h-screen">
